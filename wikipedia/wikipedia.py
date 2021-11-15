@@ -17,6 +17,10 @@ RATE_LIMIT = False
 RATE_LIMIT_MIN_WAIT = None
 RATE_LIMIT_LAST_CALL = None
 USER_AGENT = 'wikipedia (https://github.com/goldsmith/Wikipedia/)'
+PROXY = {
+  'http': 'http://127.0.0.1:10809',
+  'https': 'https://127.0.0.1:10809'
+}
 
 
 def set_lang(prefix):
@@ -77,6 +81,7 @@ def set_rate_limiting(rate_limit, min_wait=timedelta(milliseconds=50)):
     RATE_LIMIT_MIN_WAIT = min_wait
 
   RATE_LIMIT_LAST_CALL = None
+
 
 
 @cache
@@ -717,6 +722,7 @@ def _wiki_request(params):
   '''
   global RATE_LIMIT_LAST_CALL
   global USER_AGENT
+  global PROXY
 
   params['format'] = 'json'
   if not 'action' in params:
@@ -725,6 +731,8 @@ def _wiki_request(params):
   headers = {
     'User-Agent': USER_AGENT
   }
+
+  proxy = PROXY
 
   if RATE_LIMIT and RATE_LIMIT_LAST_CALL and \
     RATE_LIMIT_LAST_CALL + RATE_LIMIT_MIN_WAIT > datetime.now():
@@ -735,7 +743,7 @@ def _wiki_request(params):
     wait_time = (RATE_LIMIT_LAST_CALL + RATE_LIMIT_MIN_WAIT) - datetime.now()
     time.sleep(int(wait_time.total_seconds()))
 
-  r = requests.get(API_URL, params=params, headers=headers)
+  r = requests.get(API_URL, params=params, headers=headers, proxies=proxy)
 
   if RATE_LIMIT:
     RATE_LIMIT_LAST_CALL = datetime.now()
